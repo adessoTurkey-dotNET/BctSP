@@ -1,5 +1,8 @@
 namespace BctSP
 {
+    /// <summary>
+    /// Configuration options of BctSP.
+    /// </summary>
     public class BctSpOptions
     {
         /// <summary>

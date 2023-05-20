@@ -132,6 +132,9 @@ public class WeatherForecastController
     }
 ```
 ------------
+**Contact Me:** &nbsp;  - ***[LinkedIn](https://tr.linkedin.com/in/bariscantanriverdi)*** &nbsp; - &nbsp; ***[Mail](mailto:mail@baristanriverdii@gmail.com?subject=BctSP)***
+
+------------
 
 ![MsSql](https://cdn.iconscout.com/icon/free/png-256/free-sql-4-190807.png?f=webp&w=256)
 ![PostgreSql](https://cdn.iconscout.com/icon/free/png-256/free-postgresql-11-1175122.png)

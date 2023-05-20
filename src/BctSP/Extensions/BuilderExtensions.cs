@@ -15,8 +15,18 @@ using Microsoft.Extensions.Options;
 
 namespace BctSP.Extensions
 {
+    /// <summary>
+    /// BctSP builder extension.
+    /// </summary>
     public static class BuilderExtensions
     {
+        /// <summary>
+        /// Add BctSP configurations. 
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="setupAction"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static IServiceCollection AddBctSp(this IServiceCollection services, Action<BctSpOptions> setupAction)
         {
             var bctSpOptions = new BctSpOptions();
@@ -26,14 +36,7 @@ namespace BctSP.Extensions
             {
                 throw new Exception("Connection string and database type should be configured");
             }
-
-            // if (string.IsNullOrWhiteSpace(bctSpOptions.ConnectionString))
-            // {
-            //     bctSpOptions.ConnectionString = bctSpOptions.DbConfiguration.Configuration
-            //         .GetSection(bctSpOptions.DbConfiguration.ConnectionStringConfigurationPath)
-            //         .Get<string>();
-            // }
-
+            
             services.AddSingleton(typeof(IOptions<BctSpOptions>), x => bctSpOptions);
 
             _ = ConfigureBctSpInfrastructure(services);

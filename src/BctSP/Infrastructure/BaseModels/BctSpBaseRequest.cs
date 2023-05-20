@@ -1,13 +1,27 @@
 namespace BctSP.Infrastructure.BaseModels
 {
+    /// <summary>
+    /// Base request.
+    /// </summary>
+    /// <typeparam name="T">BctSpBaseResponse type.</typeparam>
     // ReSharper disable once UnusedTypeParameter
     public abstract class BctSpBaseRequest<T> : BctSpCoreRequest where T : BctSpBaseResponse
     {
+        /// <summary>
+        /// default constructor.
+        /// </summary>
+        /// <param name="bctSpName"></param>
         protected BctSpBaseRequest(string bctSpName)
         {
             BctSpName = bctSpName;
         }
 
+        /// <summary>
+        /// constructor for customize database configurations. 
+        /// </summary>
+        /// <param name="bctSpName"></param>
+        /// <param name="bctSpConnectionStringOrConfigurationPath"></param>
+        /// <param name="bctSpDatabaseType"></param>
         protected BctSpBaseRequest(string bctSpName, string bctSpConnectionStringOrConfigurationPath, BctSpDatabaseType? bctSpDatabaseType)
         {
             BctSpName = bctSpName;

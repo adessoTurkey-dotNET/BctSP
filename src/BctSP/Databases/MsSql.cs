@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -23,6 +22,7 @@ namespace BctSP.Databases
                 "BctSpConnectionStringOrConfigurationPath"
             };
         }
+
         public MsSql(string connectionString)
         {
             _connectionString = connectionString;
@@ -33,45 +33,35 @@ namespace BctSP.Databases
             IDictionary<string, object> result = new ExpandoObject();
             using var connection = new SqlConnection(_connectionString);
             connection.Open();
-            try
+
+            using var command = connection.CreateCommand();
+
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                using var command = connection.CreateCommand();
+                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+            }
 
-                command.CommandText = parameters[SpPropertyName].ToString();
-                command.CommandType = CommandType.StoredProcedure;
+            using var reader = command.ExecuteReader();
 
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            while (reader.Read())
+            {
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
-                }
-
-                using var reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    for (var i = 0; i < reader.FieldCount; i++)
+                    if (result.ContainsKey(reader.GetName(i)))
                     {
-                        if (result.ContainsKey(reader.GetName(i)))
-                        {
-                            continue;
-                        }
-
-                        result.Add(reader.GetName(i), reader.GetValue(i));
+                        continue;
                     }
 
-                    if (result.Any())
-                    {
-                        break;
-                    }
+                    result.Add(reader.GetName(i), reader.GetValue(i));
                 }
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-            finally
-            {
-                connection.Close();
+
+                if (result.Any())
+                {
+                    break;
+                }
             }
 
             return result;
@@ -82,38 +72,27 @@ namespace BctSP.Databases
             var result = new List<ExpandoObject>();
             using var connection = new SqlConnection(_connectionString);
             connection.Open();
-            try
+            using var command = connection.CreateCommand();
+
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                using var command = connection.CreateCommand();
+                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+            }
 
-                command.CommandText = parameters[SpPropertyName].ToString();
-                command.CommandType = CommandType.StoredProcedure;
+            using var reader = command.ExecuteReader();
 
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            while (reader.Read())
+            {
+                IDictionary<string, object> response = new ExpandoObject();
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                    response.Add(reader.GetName(i), reader.GetValue(i));
                 }
 
-                using var reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    IDictionary<string, object> response = new ExpandoObject();
-                    for (var i = 0; i < reader.FieldCount; i++)
-                    {
-                        response.Add(reader.GetName(i), reader.GetValue(i));
-                    }
-
-                    result.Add((ExpandoObject)response);
-                }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                connection.Close();
+                result.Add((ExpandoObject)response);
             }
 
             return result;
@@ -123,28 +102,17 @@ namespace BctSP.Databases
         {
             using var connection = new SqlConnection(_connectionString);
             connection.Open();
-            try
-            {
-                using var command = connection.CreateCommand();
+            using var command = connection.CreateCommand();
 
-                command.CommandText = parameters[SpPropertyName].ToString();
-                command.CommandType = CommandType.StoredProcedure;
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
 
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
-                {
-                    command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
-                }
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            {
+                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+            }
 
-                command.ExecuteNonQuery();
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                connection.Close();
-            }
+            command.ExecuteNonQuery();
         }
 
         public async Task<IDictionary<string, object>> QueryFirstAsync(IDictionary<string, object> parameters)
@@ -152,44 +120,33 @@ namespace BctSP.Databases
             IDictionary<string, object> result = new ExpandoObject();
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
-            try
+            await using var command = connection.CreateCommand();
+
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                await using var command = connection.CreateCommand();
+                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+            }
 
-                command.CommandText = parameters[SpPropertyName].ToString();
-                command.CommandType = CommandType.StoredProcedure;
-
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
-                }
-
-                await using var reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    for (var i = 0; i < reader.FieldCount; i++)
+                    if (result.ContainsKey(reader.GetName(i)))
                     {
-                        if (result.ContainsKey(reader.GetName(i)))
-                        {
-                            continue;
-                        }
-
-                        result.Add(reader.GetName(i), reader.GetValue(i));
+                        continue;
                     }
 
-                    if (result.Any())
-                    {
-                        break;
-                    }
+                    result.Add(reader.GetName(i), reader.GetValue(i));
                 }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                await connection.CloseAsync();
+
+                if (result.Any())
+                {
+                    break;
+                }
             }
 
             return result;
@@ -200,38 +157,27 @@ namespace BctSP.Databases
             var result = new List<ExpandoObject>();
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
-            try
+            await using var command = connection.CreateCommand();
+
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                await using var command = connection.CreateCommand();
+                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+            }
 
-                command.CommandText = parameters[SpPropertyName].ToString();
-                command.CommandType = CommandType.StoredProcedure;
+            await using var reader = await command.ExecuteReaderAsync();
 
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            while (await reader.ReadAsync())
+            {
+                IDictionary<string, object> response = new ExpandoObject();
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                    response.Add(reader.GetName(i), reader.GetValue(i));
                 }
 
-                await using var reader = await command.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
-                {
-                    IDictionary<string, object> response = new ExpandoObject();
-                    for (var i = 0; i < reader.FieldCount; i++)
-                    {
-                        response.Add(reader.GetName(i), reader.GetValue(i));
-                    }
-
-                    result.Add((ExpandoObject)response);
-                }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                await connection.CloseAsync();
+                result.Add((ExpandoObject)response);
             }
 
             return result;
@@ -241,28 +187,17 @@ namespace BctSP.Databases
         {
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
-            try
-            {
-                await using var command = connection.CreateCommand();
+            await using var command = connection.CreateCommand();
 
-                command.CommandText = parameters[SpPropertyName].ToString();
-                command.CommandType = CommandType.StoredProcedure;
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
 
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
-                {
-                    command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
-                }
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            {
+                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+            }
 
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                await connection.CloseAsync();
-            }
+            await command.ExecuteNonQueryAsync();
         }
     }
 }

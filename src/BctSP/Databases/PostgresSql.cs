@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -34,42 +33,31 @@ namespace BctSP.Databases
             IDictionary<string, object> result = new ExpandoObject();
             using var connection = new NpgsqlConnection(_connectionString);
             connection.Open();
-            try
+            using var command = connection.CreateCommand();
+
+            command.CommandText = GetCommandText(parameters);
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                using var command = connection.CreateCommand();
+                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+            }
 
-                command.CommandText = GetCommandText(parameters);
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
-                }
-
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    for (var i = 0; i < reader.FieldCount; i++)
+                    if (result.ContainsKey(reader.GetName(i)))
                     {
-                        if (result.ContainsKey(reader.GetName(i)))
-                        {
-                            continue;
-                        }
-
-                        result.Add(reader.GetName(i), reader.GetValue(i));
+                        continue;
                     }
 
-                    if (result.Any())
-                    {
-                        break;
-                    }
+                    result.Add(reader.GetName(i), reader.GetValue(i));
                 }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                connection.Close();
+
+                if (result.Any())
+                {
+                    break;
+                }
             }
 
             return result;
@@ -80,36 +68,25 @@ namespace BctSP.Databases
             var result = new List<ExpandoObject>();
             using var connection = new NpgsqlConnection(_connectionString);
             connection.Open();
-            try
-            {
-                using var command = connection.CreateCommand();
+            using var command = connection.CreateCommand();
 
-                command.CommandText = GetCommandText(parameters);
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            command.CommandText = GetCommandText(parameters);
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            {
+                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+            }
+
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                IDictionary<string, object> response = new ExpandoObject();
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                    response.Add(reader.GetName(i), reader.GetValue(i));
                 }
 
-                using var reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    IDictionary<string, object> response = new ExpandoObject();
-                    for (var i = 0; i < reader.FieldCount; i++)
-                    {
-                        response.Add(reader.GetName(i), reader.GetValue(i));
-                    }
-
-                    result.Add((ExpandoObject)response);
-                }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                connection.Close();
+                result.Add((ExpandoObject)response);
             }
 
             return result;
@@ -119,26 +96,15 @@ namespace BctSP.Databases
         {
             using var connection = new NpgsqlConnection(_connectionString);
             connection.Open();
-            try
-            {
-                using var command = connection.CreateCommand();
+            using var command = connection.CreateCommand();
 
-                command.CommandText = GetCommandText(parameters);
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
-                {
-                    command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
-                }
+            command.CommandText = GetCommandText(parameters);
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            {
+                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+            }
 
-                command.ExecuteNonQuery();
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                connection.Close();
-            }
+            command.ExecuteNonQuery();
         }
 
 
@@ -147,42 +113,31 @@ namespace BctSP.Databases
             IDictionary<string, object> result = new ExpandoObject();
             await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
-            try
+            await using var command = connection.CreateCommand();
+
+            command.CommandText = GetCommandText(parameters);
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                await using var command = connection.CreateCommand();
+                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+            }
 
-                command.CommandText = GetCommandText(parameters);
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
-                }
-
-                await using var reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    for (var i = 0; i < reader.FieldCount; i++)
+                    if (result.ContainsKey(reader.GetName(i)))
                     {
-                        if (result.ContainsKey(reader.GetName(i)))
-                        {
-                            continue;
-                        }
-
-                        result.Add(reader.GetName(i), reader.GetValue(i));
+                        continue;
                     }
 
-                    if (result.Any())
-                    {
-                        break;
-                    }
+                    result.Add(reader.GetName(i), reader.GetValue(i));
                 }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                await connection.CloseAsync();
+
+                if (result.Any())
+                {
+                    break;
+                }
             }
 
             return result;
@@ -193,36 +148,25 @@ namespace BctSP.Databases
             var result = new List<ExpandoObject>();
             await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
-            try
-            {
-                await using var command = connection.CreateCommand();
+            await using var command = connection.CreateCommand();
 
-                command.CommandText = GetCommandText(parameters);
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            command.CommandText = GetCommandText(parameters);
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            {
+                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+            }
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                IDictionary<string, object> response = new ExpandoObject();
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                    response.Add(reader.GetName(i), reader.GetValue(i));
                 }
 
-                await using var reader = await command.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
-                {
-                    IDictionary<string, object> response = new ExpandoObject();
-                    for (var i = 0; i < reader.FieldCount; i++)
-                    {
-                        response.Add(reader.GetName(i), reader.GetValue(i));
-                    }
-
-                    result.Add((ExpandoObject)response);
-                }
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                await connection.CloseAsync();
+                result.Add((ExpandoObject)response);
             }
 
             return result;
@@ -232,26 +176,15 @@ namespace BctSP.Databases
         {
             await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
-            try
-            {
-                await using var command = connection.CreateCommand();
+            await using var command = connection.CreateCommand();
 
-                command.CommandText = GetCommandText(parameters);
-                foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
-                {
-                    command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
-                }
+            command.CommandText = GetCommandText(parameters);
+            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
+            {
+                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+            }
 
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (Exception)
-            {
-                //ignored
-            }
-            finally
-            {
-                await connection.CloseAsync();
-            }
+            await command.ExecuteNonQueryAsync();
         }
 
 
