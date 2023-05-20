@@ -136,7 +136,3 @@ public class WeatherForecastController
 
 ------------
 
-![MsSql](https://cdn.iconscout.com/icon/free/png-256/free-sql-4-190807.png?f=webp&w=256)
-![PostgreSql](https://cdn.iconscout.com/icon/free/png-256/free-postgresql-11-1175122.png)
-![MySql](https://cdn.iconscout.com/icon/free/png-256/free-mysql-21-1174941.png)
-
