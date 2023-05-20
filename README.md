@@ -66,7 +66,7 @@ builder.Services.AddBctSp((x) =>
 ```
 
 
-- Create an interface which implements IBctSp and has method signatures.
+- Get the interface with Dependency injection pattern.
 
 ```cs    
 public class WeatherForecastController
