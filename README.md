@@ -1,20 +1,19 @@
-# BctSp
+# BctSP
 
-This project has been developed with the .NET Standart 2.1 and allows you to call stored procedure from the database
-by simply creating only interface and methods signature without needing any concrete class to call any stored procedure.
-**It can work async and sync. It provides stored procedure support for MsSQL and MySQL, function support for PostgreSQL.**
-
+This project has been developed with the .NET Standard 2.1.
+It allows you to call stored procedures from the database by simply creating only the interface and methods signature without needing any concrete class to call any stored procedure.
+**It can work async and sync. It provides stored procedure support for MsSQL and MySQL and function support for PostgreSQL.**
 
 # Installation
 
-BctSP is available in Nuget. Anybody can install it via Nuget Package Manager.
-
-https://www.nuget.org/packages/BctSP
+BctSP is now available on NuGet. 
+If interested, you can easily install it using the NuGet Package Manager. It can be accessed through the link https://www.nuget.org/packages/BctSP.
 
 # Usage
 
+_To utilize the BctSP NuGet package, you can follow these phases:_
 
-- Add BctSp service to your application builder in Program.cs and set BctSpConnectionStringOrConfigurationPath and DatabaseType for database connection which can be MsSQL or MySQL or PostgreSQL.
+- Add BctSP service to your application builder in Program.cs and set BctSpConnectionStringOrConfigurationPath and DatabaseType for database connection, which can be MsSQL, MySQL, or PostgreSQL.
 
 ```cs
 builder.Services.AddBctSp((x) =>
@@ -25,7 +24,7 @@ builder.Services.AddBctSp((x) =>
 });
 ```
 
-- Create a request that inherits from the BctSpBaseRequest. Generic argument of the BctSpBaseRequest should be the response type of the request that inherits BctSpBaseResponse.
+- Create a request that inherits from the BctSpBaseRequest. The generic argument of the BctSpBaseRequest should be the response type of the request that inherits BctSpBaseResponse.
 
 ```cs
     public class GetProductsByPriceRequest : BctSpBaseRequest<GetProductsByPriceResponse>
@@ -52,7 +51,7 @@ builder.Services.AddBctSp((x) =>
 	}
 ```
 
-- Create an interface which implements IBctSp and has method signatures.
+- Create an interface that implements IBctSp and has method signatures.
 
 ```cs
 	public interface ISampleSP : IBctSp
@@ -66,7 +65,8 @@ builder.Services.AddBctSp((x) =>
 ```
 
 
-- Get the interface with Dependency injection pattern.
+- Get the interface with the Dependency Injection pattern.
+
 
 ```cs    
 public class WeatherForecastController
@@ -79,7 +79,7 @@ public class WeatherForecastController
     }
 ```
 
-- Sample Usage
+_Sample Usage_
 
 ```cs
         public List<GetProductsByPriceResponse> GetProductsByPrice()
@@ -98,7 +98,8 @@ public class WeatherForecastController
 ```
 
 
-- Customized Usage -- the database configuration can be overridden and customized for each request if it is needed.
+_Customized Usage_  
+The database configuration can be overridden and customized for each request if needed.
 
 ```cs
     public List<GetProductsByPriceResponse> GetProductsByPrice()
