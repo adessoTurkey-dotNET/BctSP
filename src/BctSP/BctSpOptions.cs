@@ -1,3 +1,5 @@
+using BctSP.Enums;
+
 namespace BctSP
 {
     /// <summary>

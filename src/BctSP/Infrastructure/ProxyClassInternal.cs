@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using BctSP.Attributes;
 using BctSP.Databases;
+using BctSP.Enums;
 using BctSP.Extensions;
 using BctSP.Infrastructure.BaseModels;
 using Microsoft.Extensions.Configuration;
@@ -78,22 +81,18 @@ namespace BctSP.Infrastructure
                                             throw new ArgumentException());
         }
 
-        private static ISqlBase GetSql(IServiceScope serviceScope, IDictionary<string, object> requestDictionary,
-            IConfiguration configuration)
+        private static ISqlBase GetSql(IServiceScope serviceScope,
+            IConfiguration configuration, BctSpAttribute bctSpAttribute)
         {
             var bctSpOptions = (BctSpOptions)serviceScope.ServiceProvider.GetService(typeof(IOptions<BctSpOptions>));
 
             var databaseType = bctSpOptions.DatabaseType;
             var connectionString = bctSpOptions.BctSpConnectionStringOrConfigurationPath;
-            if (requestDictionary.TryGetValue("BctSpDatabaseType", out var typeValue) && typeValue != null)
-            {
-                databaseType = (BctSpDatabaseType)typeValue;
-            }
 
-            if (requestDictionary.TryGetValue("BctSpConnectionStringOrConfigurationPath", out var connectionStringValue) &&
-                connectionStringValue != null)
+            if (!string.IsNullOrEmpty(bctSpAttribute.BctSpConnectionStringOrConfigurationPath))
             {
-                connectionString = connectionStringValue.ToString();
+                connectionString = bctSpAttribute.BctSpConnectionStringOrConfigurationPath.ToString();
+                databaseType = bctSpAttribute.BctSpDatabaseType;
             }
 
             if (!connectionString.CheckIfConnectionString())
@@ -104,7 +103,7 @@ namespace BctSP.Infrastructure
             }
 
             Debug.Assert(databaseType != null, nameof(databaseType) + " != null");
-            return GetDbContext(databaseType.Value, connectionString);
+            return GetDbContext(databaseType.Value, connectionString, bctSpAttribute.BctSpCommandType);
         }
 
         private static IDictionary<string, object> GenerateRequestDictionary(BctSpCoreRequest<BctSpBaseResponse> request)
@@ -119,13 +118,18 @@ namespace BctSP.Infrastructure
             return obj;
         }
 
-        private static ISqlBase GetDbContext(BctSpDatabaseType databaseType, string connectionString)
+        private static ISqlBase GetDbContext(BctSpDatabaseType databaseType, string connectionString, BctSpCommandType commandType)
         {
-            return databaseType switch
+            return (databaseType, commandType) switch
             {
-                BctSpDatabaseType.MsSql => new MsSql(connectionString),
-                BctSpDatabaseType.MySql => new Databases.MySql(connectionString),
-                BctSpDatabaseType.PostgreSql => new PostgresSql(connectionString),
+                (BctSpDatabaseType.MsSql, BctSpCommandType.StoredProcedure) => new MsSqlStoredProcedure(connectionString),
+                (BctSpDatabaseType.MsSql, BctSpCommandType.Function) => new MsSqlFunction(connectionString),
+                (BctSpDatabaseType.MySql, BctSpCommandType.StoredProcedure) => new MySqlStoredProcedure(connectionString),
+                (BctSpDatabaseType.MySql, BctSpCommandType.Function) => new MySqlFunction(connectionString),
+                (BctSpDatabaseType.PostgreSql, BctSpCommandType.StoredProcedure) => new PostgreSqlStoredProcedure(connectionString),
+                (BctSpDatabaseType.PostgreSql, BctSpCommandType.Function) => new PostgreSqlFunction(connectionString),
+                (BctSpDatabaseType.OracleSql, BctSpCommandType.StoredProcedure) => new OracleSqlStoredProcedure(connectionString),
+                (BctSpDatabaseType.OracleSql, BctSpCommandType.Function) => new OracleSqlFunction(connectionString),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -150,6 +154,15 @@ namespace BctSP.Infrastructure
             tt.GetType().GetMethod("SetResult")?.Invoke(tt, new[] { response });
 
             return tt.GetType().GetProperty("Task")?.GetValue(tt);
+        }
+
+        private BctSpAttribute GetRequestAttribute(BctSpCoreRequest<BctSpBaseResponse> request)
+        {
+            var attr = request.GetType().GetCustomAttribute<BctSpAttribute>();
+            if (attr == null)
+                throw new Exception("Command type and SP/Function name should be added to request as class attribute.");
+            return attr;
+            
         }
     }
 }

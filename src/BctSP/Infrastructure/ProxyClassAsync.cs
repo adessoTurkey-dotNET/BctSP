@@ -13,7 +13,10 @@ namespace BctSP.Infrastructure
                 using var service = _serviceScope.GetRequiredService<IServiceScopeFactory>().CreateScope();
                 var requestDictionary = GenerateRequestDictionary(request);
 
-                var sqlDatabase = GetSql(service, requestDictionary, _configuration);
+                var attr = this.GetRequestAttribute(request);
+                var sqlDatabase = GetSql(service, _configuration, attr);
+
+                requestDictionary.Add("x-BctSpName", attr.BctSpName);
                 object responseDictionaryFirst = await sqlDatabase.QueryFirstAsync(requestDictionary);
 
                 var response = GetResponseInstance(request, false);
@@ -30,7 +33,10 @@ namespace BctSP.Infrastructure
                 using var service = _serviceScope.GetRequiredService<IServiceScopeFactory>().CreateScope();
                 var requestDictionary = GenerateRequestDictionary(request);
 
-                var sqlDatabase = GetSql(service, requestDictionary, _configuration);
+                var attr = this.GetRequestAttribute(request);
+                var sqlDatabase = GetSql(service, _configuration, attr);
+
+                requestDictionary.Add("x-BctSpName", attr.BctSpName);
                 await sqlDatabase.NonQueryAsync(requestDictionary);
             });
         }
@@ -42,7 +48,11 @@ namespace BctSP.Infrastructure
                 using var service = _serviceScope.GetRequiredService<IServiceScopeFactory>().CreateScope();
                 var requestDictionary = GenerateRequestDictionary(request);
 
-                var sqlDatabase = GetSql(service, requestDictionary, _configuration);
+                var attr = this.GetRequestAttribute(request);
+                var sqlDatabase = GetSql(service, _configuration, attr);
+
+
+                requestDictionary.Add("x-BctSpName", attr.BctSpName);
                 object responseDictionary = await sqlDatabase.QueryAsync(requestDictionary);
 
                 var response = GetResponseInstance(request, true);
