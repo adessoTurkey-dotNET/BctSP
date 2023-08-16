@@ -1,8 +1,8 @@
 # BctSP
 
 This project has been developed with the .NET Standard 2.1.
-It allows you to call stored procedures from the database by simply creating only the interface and methods signature without needing any concrete class to call any stored procedure.
-**It can work async and sync. It provides stored procedure support for MsSQL and MySQL and function support for PostgreSQL.**
+It allows you to call stored procedures and functions from the database by simply creating only the interface and methods signature without needing any concrete class to call any stored procedure.
+**It can work async and sync. It provides stored procedure and function support for MsSQL, MySQL, PostgreSQL and OracleSQL**
 
 # Installation
 
@@ -13,7 +13,7 @@ If interested, you can easily install it using the NuGet Package Manager. It can
 
 _To utilize the BctSP NuGet package, you can follow these phases:_
 
-- Add BctSP service to your application builder in Program.cs and set BctSpConnectionStringOrConfigurationPath and DatabaseType for database connection, which can be MsSQL, MySQL, or PostgreSQL.
+- Add BctSP service to your application builder in Program.cs and set BctSpConnectionStringOrConfigurationPath and DatabaseType for database connection, which can be MsSQL, MySQL, PostgreSQL, OracleSQL.
 
 ```cs
 builder.Services.AddBctSp((x) =>
@@ -25,15 +25,13 @@ builder.Services.AddBctSp((x) =>
 ```
 
 - Create a request that inherits from the BctSpBaseRequest. The generic argument of the BctSpBaseRequest should be the response type of the request that inherits BctSpBaseResponse.
-- The request should have 2 class attributes, sp/function name and command type.
+- The request should have a class attributes whichs arguments should be sp/function name and command type.
 
 ```cs
     [BctSpAttribute("GetProductsByPrice", BctSP.Enums.BctSpCommandType.StoredProcedure)]
     public class GetProductsByPriceRequest : BctSpBaseRequest<GetProductsByPriceResponse>
     {
-
         public decimal ProductPrice { get; set; }
-
     }
 ```
 
@@ -116,7 +114,12 @@ _Sample Usage_
 ```
 
 ------------
-**Contact Me:** &nbsp;  - ***[LinkedIn](https://tr.linkedin.com/in/bariscantanriverdi)*** &nbsp; - &nbsp; ***[Mail](mailto:mail@baristanriverdii@gmail.com?subject=BctSP)***
+
+***Contributors***
+
+<a href="https://github.com/adessoTurkey-dotNET/Bctsp/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=adessoTurkey-dotNET/Bctsp" />
+</a>
 
 ------------
 
