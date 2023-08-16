@@ -1,4 +1,4 @@
-namespace BctSP
+﻿namespace BctSP.Enums
 {
     /// <summary>
     /// Database type.
@@ -16,6 +16,10 @@ namespace BctSP
         /// <summary>
         /// PostgreSql
         /// </summary>
-        PostgreSql
+        PostgreSql,
+        /// <summary>
+        /// OracleSql
+        /// </summary>
+        OracleSql,
     }
 }

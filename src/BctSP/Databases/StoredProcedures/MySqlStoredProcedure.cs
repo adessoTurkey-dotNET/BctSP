@@ -1,29 +1,29 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Npgsql;
+using MySql.Data.MySqlClient;
 
 namespace BctSP.Databases
 {
-    internal class PostgresSql : ISqlBase
+    internal class MySqlStoredProcedure : ISqlBase
     {
-        private const string SpPropertyName = "BctSpName";
+        private const string SpPropertyName = "x-BctSpName";
         private static string _connectionString;
+
         private static readonly string[] ExcludedProperties;
 
-        static PostgresSql()
+        static MySqlStoredProcedure()
         {
             ExcludedProperties = new[]
             {
-                SpPropertyName,
-                "BctSpDatabaseType",
-                "BctSpConnectionStringOrConfigurationPath"
+                SpPropertyName
             };
         }
 
-        public PostgresSql(string connectionString)
+        public MySqlStoredProcedure(string connectionString)
         {
             _connectionString = connectionString;
         }
@@ -31,17 +31,20 @@ namespace BctSP.Databases
         public IDictionary<string, object> QueryFirst(IDictionary<string, object> parameters)
         {
             IDictionary<string, object> result = new ExpandoObject();
-            using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new MySqlConnection(_connectionString);
             connection.Open();
             using var command = connection.CreateCommand();
 
-            command.CommandText = GetCommandText(parameters);
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                command.Parameters.Add(new MySqlParameter($"@{property.Key}", property.Value));
             }
 
             using var reader = command.ExecuteReader();
+
             while (reader.Read())
             {
                 for (var i = 0; i < reader.FieldCount; i++)
@@ -66,14 +69,16 @@ namespace BctSP.Databases
         public IEnumerable<ExpandoObject> Query(IDictionary<string, object> parameters)
         {
             var result = new List<ExpandoObject>();
-            using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new MySqlConnection(_connectionString);
             connection.Open();
             using var command = connection.CreateCommand();
 
-            command.CommandText = GetCommandText(parameters);
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                command.Parameters.Add(new MySqlParameter($"@{property.Key}", property.Value));
             }
 
             using var reader = command.ExecuteReader();
@@ -94,31 +99,34 @@ namespace BctSP.Databases
 
         public void NonQuery(IDictionary<string, object> parameters)
         {
-            using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new MySqlConnection(_connectionString);
             connection.Open();
             using var command = connection.CreateCommand();
 
-            command.CommandText = GetCommandText(parameters);
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                command.Parameters.Add(new MySqlParameter($"@{property.Key}", property.Value));
             }
 
             command.ExecuteNonQuery();
         }
 
-
         public async Task<IDictionary<string, object>> QueryFirstAsync(IDictionary<string, object> parameters)
         {
             IDictionary<string, object> result = new ExpandoObject();
-            await using var connection = new NpgsqlConnection(_connectionString);
+            await using var connection = new MySqlConnection(_connectionString);
             await connection.OpenAsync();
             await using var command = connection.CreateCommand();
 
-            command.CommandText = GetCommandText(parameters);
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                command.Parameters.Add(new MySqlParameter($"@{property.Key}", property.Value));
             }
 
             await using var reader = await command.ExecuteReaderAsync();
@@ -146,18 +154,19 @@ namespace BctSP.Databases
         public async Task<IEnumerable<ExpandoObject>> QueryAsync(IDictionary<string, object> parameters)
         {
             var result = new List<ExpandoObject>();
-            await using var connection = new NpgsqlConnection(_connectionString);
+            await using var connection = new MySqlConnection(_connectionString);
             await connection.OpenAsync();
             await using var command = connection.CreateCommand();
 
-            command.CommandText = GetCommandText(parameters);
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                command.Parameters.Add(new MySqlParameter($"@{property.Key}", property.Value));
             }
 
             await using var reader = await command.ExecuteReaderAsync();
-
             while (await reader.ReadAsync())
             {
                 IDictionary<string, object> response = new ExpandoObject();
@@ -174,31 +183,20 @@ namespace BctSP.Databases
 
         public async Task NonQueryAsync(IDictionary<string, object> parameters)
         {
-            await using var connection = new NpgsqlConnection(_connectionString);
+            await using var connection = new MySqlConnection(_connectionString);
             await connection.OpenAsync();
             await using var command = connection.CreateCommand();
 
-            command.CommandText = GetCommandText(parameters);
+            command.CommandText = parameters[SpPropertyName].ToString();
+            command.CommandType = CommandType.StoredProcedure;
+
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new NpgsqlParameter($"{property.Key}", property.Value));
+                command.Parameters.Add(new MySqlParameter($"@{property.Key}", property.Value));
             }
 
             await command.ExecuteNonQueryAsync();
         }
 
-
-        private static string GetCommandText(IDictionary<string, object> parameters)
-        {
-            var sb = new StringBuilder();
-            foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
-            {
-                sb.Append("@");
-                sb.Append(property.Key);
-                sb.Append(",");
-            }
-
-            return $"SELECT * FROM {parameters[SpPropertyName]}({sb.Remove(sb.Length - 1, 1)})";
-        }
     }
 }

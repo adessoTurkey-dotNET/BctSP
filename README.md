@@ -25,18 +25,36 @@ builder.Services.AddBctSp((x) =>
 ```
 
 - Create a request that inherits from the BctSpBaseRequest. The generic argument of the BctSpBaseRequest should be the response type of the request that inherits BctSpBaseResponse.
+- The request should have 2 class attributes, sp/function name and command type.
 
 ```cs
+    [BctSpAttribute("GetProductsByPrice", BctSP.Enums.BctSpCommandType.StoredProcedure)]
     public class GetProductsByPriceRequest : BctSpBaseRequest<GetProductsByPriceResponse>
     {
-        public GetProductsByPriceRequest(string bctSpName) : base(bctSpName)
-        {
-        }
 
         public decimal ProductPrice { get; set; }
 
     }
 ```
+
+_Customized Usage_  
+The database configuration can be overridden and customized for each request if needed.
+
+```cs
+    [BctSpAttribute("GetProductsByPrice", BctSP.Enums.BctSpCommandType.StoredProcedure,"CustomDatabases:ConnectionString",BctSP.Enums.BctSpDatabaseType.MsSql))]
+    public class GetProductsByPriceRequest : BctSpBaseRequest<GetProductsByPriceResponse>
+    {
+        public decimal ProductPrice { get; set; }
+    }
+
+    //[BctSpAttribute("GetProductsByPrice", BctSP.Enums.BctSpCommandType.StoredProcedure,"Server=...",,BctSP.Enums.BctSpDatabaseType.MsSql))]
+    //public class GetProductsByPriceRequest : BctSpBaseRequest<GetProductsByPriceResponse>
+    //{
+    //    public decimal ProductPrice { get; set; }
+    //}
+
+```
+
 - Create a response that inherits from the BctSpBaseResponse.
 
 ```cs
@@ -84,54 +102,19 @@ _Sample Usage_
 ```cs
         public List<GetProductsByPriceResponse> GetProductsByPrice()
         {
-            var response = _sampleSp.GetProductsByPrice(new GetProductsByPriceRequest("yourSPname") { ProductPrice = 100 });
+            var response = _sampleSp.GetProductsByPrice(new GetProductsByPriceRequest{ ProductPrice = 100 });
 
             return response;
         }
 
         public async Task<List<GetProductsByPriceResponse>> GetProductsByPriceAsync()
         {
-            var response = await _sampleSp.GetProductsByPriceAsync(new GetProductsByPriceRequest("yourSPname") { ProductPrice = 100 });
+            var response = await _sampleSp.GetProductsByPriceAsync(new GetProductsByPriceRequest{ ProductPrice = 100 });
 
             return response;
         }
 ```
 
-
-_Customized Usage_  
-The database configuration can be overridden and customized for each request if needed.
-
-```cs
-    public List<GetProductsByPriceResponse> GetProductsByPrice()
-    {
-        var response = _sampleSp.GetProductsByPrice(
-            new GetProductsByPriceRequest("yourSPname",
-                "CustomDatabases:ConnectionString",
-                BctSpDatabaseType.MsSql) { ProductPrice = 100 });
-
-        // var response = _sampleSp.GetProductsByPrice(
-        //     new GetProductsByPriceRequest("yourSPname",
-        //         "Server=...",
-        //         BctSpDatabaseType.MsSql) { ProductPrice = 100 });
-
-        return response;
-    }
-    
-    public async Task<List<GetProductsByPriceResponse>> GetProductsByPriceAsync()
-    {
-        var response = await _sampleSp.GetProductsByPriceAsync(
-            new GetProductsByPriceRequest("yourSPname",
-                "CustomDatabases:ConnectionString",
-                BctSpDatabaseType.MsSql) { ProductPrice = 100 });
-
-        // var response = await _sampleSp.GetProductsByPriceAsync(
-        //     new GetProductsByPriceRequest("yourSPname",
-        //         "Server=...",
-        //         BctSpDatabaseType.MsSql) { ProductPrice = 100 });
-
-        return response;
-    }
-```
 ------------
 **Contact Me:** &nbsp;  - ***[LinkedIn](https://tr.linkedin.com/in/bariscantanriverdi)*** &nbsp; - &nbsp; ***[Mail](mailto:mail@baristanriverdii@gmail.com?subject=BctSP)***
 

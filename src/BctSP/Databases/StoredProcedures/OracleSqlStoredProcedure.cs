@@ -1,29 +1,30 @@
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Dynamic;
-using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using System.Data;
+using Oracle.ManagedDataAccess.Client;
+using System.Linq;
+using Oracle.ManagedDataAccess.Types;
 
 namespace BctSP.Databases
 {
-    internal class MsSql : ISqlBase
+    internal class OracleSqlStoredProcedure : ISqlBase
     {
-        private const string SpPropertyName = "BctSpName";
+        private const string SpPropertyName = "x-BctSpName";
         private static string _connectionString;
         private static readonly string[] ExcludedProperties;
 
-        static MsSql()
+        static OracleSqlStoredProcedure()
         {
             ExcludedProperties = new[]
             {
-                SpPropertyName,
-                "BctSpDatabaseType",
-                "BctSpConnectionStringOrConfigurationPath"
+                SpPropertyName
             };
         }
 
-        public MsSql(string connectionString)
+        public OracleSqlStoredProcedure(string connectionString)
         {
             _connectionString = connectionString;
         }
@@ -31,17 +32,19 @@ namespace BctSP.Databases
         public IDictionary<string, object> QueryFirst(IDictionary<string, object> parameters)
         {
             IDictionary<string, object> result = new ExpandoObject();
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new OracleConnection(_connectionString);
             connection.Open();
-
-            using var command = connection.CreateCommand();
-
-            command.CommandText = parameters[SpPropertyName].ToString();
+            using var command = new OracleCommand(parameters[SpPropertyName].ToString(), connection);
             command.CommandType = CommandType.StoredProcedure;
+
+            OracleParameter refCursor = new OracleParameter();
+            refCursor.OracleDbType = OracleDbType.RefCursor;
+            refCursor.Direction = ParameterDirection.Output;
+            command.Parameters.Add(refCursor);
 
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                command.Parameters.Add(new OracleParameter($"@{property.Key}", property.Value));
             }
 
             using var reader = command.ExecuteReader();
@@ -70,16 +73,21 @@ namespace BctSP.Databases
         public IEnumerable<ExpandoObject> Query(IDictionary<string, object> parameters)
         {
             var result = new List<ExpandoObject>();
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new OracleConnection(_connectionString);
             connection.Open();
-            using var command = connection.CreateCommand();
 
-            command.CommandText = parameters[SpPropertyName].ToString();
+            using var command = new OracleCommand(parameters[SpPropertyName].ToString(), connection);
             command.CommandType = CommandType.StoredProcedure;
+
+            OracleParameter refCursor = new OracleParameter();
+            refCursor.OracleDbType = OracleDbType.RefCursor;
+            refCursor.Direction = ParameterDirection.Output;
+            command.Parameters.Add(refCursor);
+
 
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                command.Parameters.Add(new OracleParameter($"@{property.Key}", property.Value));
             }
 
             using var reader = command.ExecuteReader();
@@ -100,16 +108,14 @@ namespace BctSP.Databases
 
         public void NonQuery(IDictionary<string, object> parameters)
         {
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new OracleConnection(_connectionString);
             connection.Open();
-            using var command = connection.CreateCommand();
-
-            command.CommandText = parameters[SpPropertyName].ToString();
+            using var command = new OracleCommand(parameters[SpPropertyName].ToString(), connection);
             command.CommandType = CommandType.StoredProcedure;
 
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                command.Parameters.Add(new OracleParameter($"@{property.Key}", property.Value));
             }
 
             command.ExecuteNonQuery();
@@ -118,16 +124,20 @@ namespace BctSP.Databases
         public async Task<IDictionary<string, object>> QueryFirstAsync(IDictionary<string, object> parameters)
         {
             IDictionary<string, object> result = new ExpandoObject();
-            await using var connection = new SqlConnection(_connectionString);
+            await using var connection = new OracleConnection(_connectionString);
             await connection.OpenAsync();
-            await using var command = connection.CreateCommand();
+            await using var command = new OracleCommand(parameters[SpPropertyName].ToString(), connection);
 
-            command.CommandText = parameters[SpPropertyName].ToString();
             command.CommandType = CommandType.StoredProcedure;
+
+            OracleParameter refCursor = new OracleParameter();
+            refCursor.OracleDbType = OracleDbType.RefCursor;
+            refCursor.Direction = ParameterDirection.Output;
+            command.Parameters.Add(refCursor);
 
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                command.Parameters.Add(new OracleParameter($"@{property.Key}", property.Value));
             }
 
             await using var reader = await command.ExecuteReaderAsync();
@@ -155,16 +165,19 @@ namespace BctSP.Databases
         public async Task<IEnumerable<ExpandoObject>> QueryAsync(IDictionary<string, object> parameters)
         {
             var result = new List<ExpandoObject>();
-            await using var connection = new SqlConnection(_connectionString);
+            await using var connection = new OracleConnection(_connectionString);
             await connection.OpenAsync();
-            await using var command = connection.CreateCommand();
-
-            command.CommandText = parameters[SpPropertyName].ToString();
+            await using var command = new OracleCommand(parameters[SpPropertyName].ToString(), connection);
             command.CommandType = CommandType.StoredProcedure;
+
+            OracleParameter refCursor = new OracleParameter();
+            refCursor.OracleDbType = OracleDbType.RefCursor;
+            refCursor.Direction = ParameterDirection.Output;
+            command.Parameters.Add(refCursor);
 
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                command.Parameters.Add(new OracleParameter($"@{property.Key}", property.Value));
             }
 
             await using var reader = await command.ExecuteReaderAsync();
@@ -185,19 +198,19 @@ namespace BctSP.Databases
 
         public async Task NonQueryAsync(IDictionary<string, object> parameters)
         {
-            await using var connection = new SqlConnection(_connectionString);
+            await using var connection = new OracleConnection(_connectionString);
             await connection.OpenAsync();
-            await using var command = connection.CreateCommand();
+            await using var command = new OracleCommand(parameters[SpPropertyName].ToString(), connection);
 
-            command.CommandText = parameters[SpPropertyName].ToString();
             command.CommandType = CommandType.StoredProcedure;
 
             foreach (var property in parameters.Where(x => !ExcludedProperties.Contains(x.Key)))
             {
-                command.Parameters.Add(new SqlParameter($"@{property.Key}", property.Value));
+                command.Parameters.Add(new OracleParameter($"@{property.Key}", property.Value));
             }
 
             await command.ExecuteNonQueryAsync();
         }
+
     }
 }
