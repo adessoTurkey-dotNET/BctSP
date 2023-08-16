@@ -1,7 +1,7 @@
 # BctSP
 
 This project has been developed with the .NET Standard 2.1.
-It allows you to call stored procedures and functions from the database by simply creating only the interface and methods signature without needing any concrete class to call any stored procedure.
+It allows you to call stored procedures and functions from the database by simply creating only the interface and methods signature without needing any concrete class to call any stored procedure and function.
 **It can work async and sync. It provides stored procedure and function support for MsSQL, MySQL, PostgreSQL and OracleSQL**
 
 # Installation
